@@ -25,10 +25,20 @@ const Header = () => {
             </Link>
           </li>
           <li>
+            <Link to="/" className="hover:underline">
+              List Product
+            </Link>
+          </li>
+          <li>
+            <Link to="/orders/show" className="hover:underline">
+              List Orders
+            </Link>
+          </li>
+          {/* <li>
             <Link to="/login" className="hover:underline">
               Login
             </Link>
-          </li>
+          </li> */}
         </ul>
       </nav>
     </div>

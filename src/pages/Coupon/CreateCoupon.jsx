@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import DatePicker from "react-datepicker";
-
+import axios from "axios";
 import "react-datepicker/dist/react-datepicker.css";
 import { CouponContext } from "../../context/CouponContext";
 
@@ -8,149 +8,133 @@ const CreateCoupon = () => {
   const [couponName, setCouponName] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [quantity, setQuantity] = useState(0);
-  const [maxUse, setMaxUse] = useState(0);
-  const [discountType, setDiscountType] = useState("");
-  const [discountValue, setDiscountValue] = useState(0);
-  const [status, setStatus] = useState(false);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-
-  const [coupon, setCoupon] = useState("");
+  const [maxUse, setMaxUse] = useState(1);
+  const [discountType, setDiscountType] = useState("fixed");
+  const [discountAmount, setDiscountAmount] = useState();
+  const [status, setStatus] = useState("active");
+  const [expiryDate, setExpiryDate] = useState(new Date());
   const { addCoupon } = useContext(CouponContext);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const newCoupon = {
-      couponName,
-      couponCode,
-      quantity,
-      maxUse,
+
+    if (discountAmount < 0) {
+      alert("Discount amount must be greater than or equal to 0.");
+      return;
+    }
+
+    if (maxUse < 1) {
+      alert("Usage limit must be at least 1.");
+      return;
+    }
+
+    const newVoucher = {
+      code: couponCode,
       discountType,
-      discountValue,
-      startDate,
-      endDate,
+      discountAmount,
+      expiryDate: expiryDate.toISOString(),
+      usageLimit: maxUse,
       status,
+      createdBy: "user12345",
     };
 
-    // console.log(newCoupon);
-
     try {
-      const response = await axios.post("http://127.0.0.1/api/coupon");
-      console.log("Created Success ----> ", response.data);
+      console.log("New Voucher Data:", newVoucher);
+      const response = await axios.post(
+        "http://localhost:3001/api/v1/vouchers",
+        newVoucher,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Created Success ----> ", response.data.data);
+      addCoupon(newVoucher);
 
-      addCoupon(newCoupon);
-
+      // Reset the form
       setCouponName("");
       setCouponCode("");
-      setQuantity("");
-      setMaxUse("");
-      setDiscountType("");
-      setDiscountValue("");
-      setStatus(false);
+      setQuantity(0);
+      setMaxUse(1);
+      setDiscountType("fixed");
+      setDiscountAmount(0);
+      setStatus("active");
+      setExpiryDate(new Date());
     } catch (error) {
-      console.log("Error creating coupon: ", error);
+      console.log(
+        "Error creating coupon: ",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
   return (
     <>
       <div className="max-w-full">
-        <div className="text-4xl m-12 text-center">Create Coupon</div>
+        <div className="text-4xl m-12 text-center">Create Voucher</div>
         <div className="max-w-full-lg flex justify-center items-center">
           <form onSubmit={handleSubmit}>
             <div className="flex flex-wrap">
               <div className="mb-8 mr-12">
-                <label className="block mb-4 font-bold">Coupon Name</label>
-                <input
-                  value={couponName}
-                  onChange={(e) => setCouponName(e.target.value)}
-                  className="appearance-none border-2 border-gray-200 rounded w-96 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white"
-                  type="text"
-                />
-              </div>
-              <div className="mb-8">
-                <label className="block mb-4 font-bold">Coupon Code</label>
+                <label className="block mb-4 font-bold">Voucher Code</label>
                 <input
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="appearance-none border-2 border-gray-200 rounded w-96 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white"
                   type="text"
+                  required
                 />
               </div>
             </div>
             <div className="flex flex-wrap">
               <div className="mb-8 mr-12">
-                <label className="block mb-4 font-bold">Quantity</label>
+                <label className="block mb-4 font-bold">Discount Amount</label>
                 <input
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
+                  value={discountAmount}
+                  onChange={(e) => setDiscountAmount(Number(e.target.value))}
                   className="appearance-none border-2 border-gray-200 rounded w-96 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white"
                   type="number"
+                  min="0" // Prevent negative numbers
+                  required
                 />
               </div>
               <div className="mb-8">
-                <label className="block mb-4 font-bold">Max Use</label>
+                <label className="block mb-4 font-bold">Max Usage Limit</label>
                 <input
                   value={maxUse}
-                  onChange={(e) => setMaxUse(e.target.value)}
+                  onChange={(e) => setMaxUse(Number(e.target.value))}
                   className="appearance-none border-2 border-gray-200 rounded w-96 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white"
                   type="number"
+                  min="1" // Prevent values less than 1
+                  required
                 />
               </div>
             </div>
             <div className="flex flex-wrap">
               <div className="mb-8 mr-12">
-                <label className="block mb-4 font-bold">Start Date</label>
+                <label className="block mb-4 font-bold">Expiry Date</label>
                 <DatePicker
                   className="border border-gray-200 w-96 p-2 focus:outline-none focus:bg-white"
-                  selected={startDate}
-                  onChange={(date) => setStartDate(date)}
-                />
-              </div>
-              <div className="mb-8">
-                <label className="block mb-4 font-bold">End Date</label>
-                <DatePicker
-                  className="border border-gray-200 w-96 p-2 focus:outline-none focus:bg-white"
-                  selected={endDate}
-                  onChange={(date) => setEndDate(date)}
+                  selected={expiryDate}
+                  onChange={(date) => setExpiryDate(date)}
+                  required
                 />
               </div>
             </div>
             <div className="flex flex-wrap">
               <div className="mb-8">
-                <label className="block mb-4 font-bold">Discount Types</label>
+                <label className="block mb-4 font-bold">Status</label>
                 <select
-                  value={discountType}
-                  onChange={(e) => setDiscountType(e.target.value)}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 w-60 text-sm rounded-lg focus:border-dark block p-2.5"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
-                  <option selected>Choose a type</option>
-                  <option value="percent">Percentage (%)</option>
-                  <option value="amount">Amount</option>
+                  <option value="active">Active</option>
+                  <option value="expired">Expired</option>
+                  <option value="used">Used</option>
+                  <option value="disabled">Disabled</option>
                 </select>
-              </div>
-              <div className="mb-8 mx-12">
-                <label className="block mb-4 font-bold">Discount Value</label>
-                <input
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
-                  className="appearance-none border-2 border-gray-200 rounded w-60 py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white"
-                  type="number"
-                />
-              </div>
-              <div className="m-12">
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                  />
-                  <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 dark:peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  <span className="ms-3 text-sm font-medium text-gray-900">
-                    Status
-                  </span>
-                </label>
               </div>
             </div>
 
@@ -161,7 +145,6 @@ const CreateCoupon = () => {
               Create
             </button>
           </form>
-          .
         </div>
       </div>
     </>
