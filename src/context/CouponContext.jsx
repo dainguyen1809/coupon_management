@@ -10,7 +10,7 @@ export const CouponProvider = ({ children }) => {
   };
 
   return (
-    <CouponContext.Provider value={{ coupons, addCoupon }}>
+    <CouponContext.Provider value={{ coupons, setCoupons, addCoupon }}>
       {children}
     </CouponContext.Provider>
   );
